@@ -1,8 +1,13 @@
 from decimal import Decimal
 from datetime import date
 from calendar import monthrange
+from dateutil.relativedelta import relativedelta
 
 from apps.transactions.models import Transaction
+
+
+def _month_start(d: date) -> date:
+    return d.replace(day=1)
 
 
 def _get_month_bounds(month):
@@ -17,10 +22,15 @@ def _get_month_bounds(month):
     return start, end
 
 
+CASH_ACCOUNTS = {"checking", "savings"}
+DEBT_ACCOUNTS = {"credit_card", "loan"}
+EXCLUDED_ACCOUNTS = {"investment"}
+
+
 def get_monthly_cashflow(user, month=None):
     start_date, end_date = _get_month_bounds(month)
 
-    transactions = Transaction.objects.filter(
+    transactions = Transaction.objects.select_related("account").filter(
         account__user=user,
         date__gte=start_date,
         date__lte=end_date,
@@ -31,21 +41,35 @@ def get_monthly_cashflow(user, month=None):
     by_category = {}
 
     for tx in transactions:
-        # Transfers never affect cash flow
+        account_type = tx.account.category
+
         if tx.transaction_type == Transaction.TRANSFER:
             continue
 
-        # Money in
-        if tx.amount > 0:
-            income += tx.amount
+        if account_type in EXCLUDED_ACCOUNTS:
             continue
 
-        # Money out
-        amount = abs(tx.amount)
-        expenses += amount
+        if account_type in CASH_ACCOUNTS:
+            if tx.transaction_type == Transaction.INCOME:
+                income += abs(tx.amount)
+            elif tx.transaction_type == Transaction.EXPENSE:
+                amount = abs(tx.amount)
+                expenses += amount
+                by_category[tx.category] = (
+                    by_category.get(tx.category, Decimal("0.00")) + amount
+                )
+            continue
 
-        category = tx.category or "other"
-        by_category[category] = by_category.get(category, Decimal("0.00")) + amount
+        if account_type in DEBT_ACCOUNTS:
+            if tx.transaction_type == Transaction.INCOME:
+                income += abs(tx.amount)
+            elif tx.transaction_type == Transaction.EXPENSE:
+                amount = abs(tx.amount)
+                expenses += amount
+                by_category[tx.category] = (
+                    by_category.get(tx.category, Decimal("0.00")) + amount
+                )
+            continue
 
     return {
         "month": start_date.strftime("%Y-%m"),
@@ -53,4 +77,48 @@ def get_monthly_cashflow(user, month=None):
         "expenses": expenses,
         "net": income - expenses,
         "by_category": by_category,
+    }
+
+
+def get_monthly_cashflow_comparison(user, month=None):
+    """
+    Returns:
+    {
+      current: {...},
+      previous: {...},
+      delta: {...},
+      delta_by_category: {...}
+    }
+    """
+    if month is None:
+        current_month = _month_start(date.today())
+    else:
+        current_month = _month_start(month)
+
+    previous_month = current_month - relativedelta(months=1)
+
+    current = get_monthly_cashflow(user, current_month)
+    previous = get_monthly_cashflow(user, previous_month)
+
+    delta = {
+        "income": current["income"] - previous["income"],
+        "expenses": current["expenses"] - previous["expenses"],
+        "net": current["net"] - previous["net"],
+    }
+
+    # Category deltas (union of both months)
+    delta_by_category = {}
+
+    all_categories = set(current["by_category"]) | set(previous["by_category"])
+
+    for category in all_categories:
+        current_val = current["by_category"].get(category, Decimal("0.00"))
+        previous_val = previous["by_category"].get(category, Decimal("0.00"))
+        delta_by_category[category] = current_val - previous_val
+
+    return {
+        "current": current,
+        "previous": previous,
+        "delta": delta,
+        "delta_by_category": delta_by_category,
     }
