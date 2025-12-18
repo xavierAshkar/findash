@@ -79,11 +79,11 @@ class Account(models.Model):
     # --- Derived classification flags ---
     @property
     def is_debt(self):
-        return self.account_type in {self.CREDIT, self.LOAN}
+        return self.account_type in {self.CREDIT_CARD, self.LOAN}
 
     @property
     def is_credit(self):
-        return self.account_type == self.CREDIT
+        return self.account_type == self.CREDIT_CARD
 
     @property
     def is_liquid(self):
