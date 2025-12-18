@@ -25,26 +25,25 @@ class CashflowTestCase(TestCase):
         cls.checking = Account.objects.create(
             user=cls.user,
             name="Checking",
-            category="checking",
+            account_type=Account.CHECKING,
         )
 
         cls.credit = Account.objects.create(
             user=cls.user,
             name="Credit Card",
-            category="credit_card",
+            account_type=Account.CREDIT_CARD,
         )
 
         cls.savings = Account.objects.create(
             user=cls.user,
             name="Savings",
-            category="savings",
+            account_type=Account.SAVINGS,
         )
 
         # December data
         Transaction.objects.create(
             account=cls.checking,
             amount=Decimal("3000"),
-            transaction_type="income",
             category="other",
             date=date(2025, 12, 1),
             description="Paycheck",
@@ -53,7 +52,6 @@ class CashflowTestCase(TestCase):
         Transaction.objects.create(
             account=cls.checking,
             amount=Decimal("-1200"),
-            transaction_type="expense",
             category="rent",
             date=date(2025, 12, 2),
             description="Rent",
@@ -61,8 +59,7 @@ class CashflowTestCase(TestCase):
 
         Transaction.objects.create(
             account=cls.credit,
-            amount=Decimal("150"),
-            transaction_type="expense",
+            amount=Decimal("150"),  # credit purchase → expense
             category="shopping",
             date=date(2025, 12, 5),
             description="Shopping",
@@ -70,8 +67,7 @@ class CashflowTestCase(TestCase):
 
         Transaction.objects.create(
             account=cls.credit,
-            amount=Decimal("-50"),
-            transaction_type="income",
+            amount=Decimal("-50"),  # cashback → debt reduction
             category="other",
             date=date(2025, 12, 10),
             description="Cashback",
@@ -81,7 +77,6 @@ class CashflowTestCase(TestCase):
         Transaction.objects.create(
             account=cls.checking,
             amount=Decimal("2800"),
-            transaction_type="income",
             category="other",
             date=date(2025, 11, 1),
             description="Paycheck",
@@ -90,9 +85,9 @@ class CashflowTestCase(TestCase):
     def test_get_monthly_cashflow(self):
         result = get_monthly_cashflow(self.user, date(2025, 12, 1))
 
-        self.assertEqual(result["income"], Decimal("3050"))
+        self.assertEqual(result["income"], Decimal("3000"))
         self.assertEqual(result["expenses"], Decimal("1350"))
-        self.assertEqual(result["net"], Decimal("1700"))
+        self.assertEqual(result["net"], Decimal("1650"))
 
         self.assertEqual(result["by_category"]["rent"], Decimal("1200"))
         self.assertEqual(result["by_category"]["shopping"], Decimal("150"))
@@ -100,6 +95,6 @@ class CashflowTestCase(TestCase):
     def test_monthly_cashflow_comparison(self):
         result = get_monthly_cashflow_comparison(self.user, date(2025, 12, 1))
 
-        self.assertEqual(result["delta"]["income"], Decimal("250"))
+        self.assertEqual(result["delta"]["income"], Decimal("200"))
         self.assertEqual(result["delta"]["expenses"], Decimal("1350"))
-        self.assertEqual(result["delta"]["net"], Decimal("-1100"))
+        self.assertEqual(result["delta"]["net"], Decimal("-1150"))

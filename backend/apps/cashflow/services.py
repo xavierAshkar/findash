@@ -3,12 +3,11 @@ from datetime import date
 from calendar import monthrange
 from dateutil.relativedelta import relativedelta
 
+from apps.accounts.models import Account
 from apps.transactions.models import Transaction
-
 
 def _month_start(d: date) -> date:
     return d.replace(day=1)
-
 
 def _get_month_bounds(month):
     if month is None:
@@ -20,12 +19,6 @@ def _get_month_bounds(month):
     start = date(year, month_num, 1)
     end = date(year, month_num, monthrange(year, month_num)[1])
     return start, end
-
-
-CASH_ACCOUNTS = {"checking", "savings"}
-DEBT_ACCOUNTS = {"credit_card", "loan"}
-EXCLUDED_ACCOUNTS = {"investment"}
-
 
 def get_monthly_cashflow(user, month=None):
     start_date, end_date = _get_month_bounds(month)
@@ -41,35 +34,33 @@ def get_monthly_cashflow(user, month=None):
     by_category = {}
 
     for tx in transactions:
-        account_type = tx.account.category
-
-        if tx.transaction_type == Transaction.TRANSFER:
+        # Ignore transfers
+        if tx.is_transfer:
             continue
 
-        if account_type in EXCLUDED_ACCOUNTS:
+        # Ignore investments entirely
+        if tx.account.account_type == Account.INVESTMENT:
             continue
 
-        if account_type in CASH_ACCOUNTS:
-            if tx.transaction_type == Transaction.INCOME:
-                income += abs(tx.amount)
-            elif tx.transaction_type == Transaction.EXPENSE:
-                amount = abs(tx.amount)
-                expenses += amount
-                by_category[tx.category] = (
-                    by_category.get(tx.category, Decimal("0.00")) + amount
-                )
-            continue
+        if tx.is_income:
+            income += tx.amount
 
-        if account_type in DEBT_ACCOUNTS:
-            if tx.transaction_type == Transaction.INCOME:
-                income += abs(tx.amount)
-            elif tx.transaction_type == Transaction.EXPENSE:
-                amount = abs(tx.amount)
-                expenses += amount
-                by_category[tx.category] = (
-                    by_category.get(tx.category, Decimal("0.00")) + amount
-                )
-            continue
+        elif tx.is_expense:
+            amount = abs(tx.amount)
+            expenses += amount
+            by_category[tx.category] = (
+                by_category.get(tx.category, Decimal("0.00")) + amount
+            )
+
+        elif tx.is_debt_increase:
+            # Credit card purchase = expense
+            amount = tx.amount  # already positive
+            expenses += amount
+            by_category[tx.category] = (
+                by_category.get(tx.category, Decimal("0.00")) + amount
+            )
+
+        # tx.is_debt_payment → intentionally ignored
 
     return {
         "month": start_date.strftime("%Y-%m"),
