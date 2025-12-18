@@ -1,22 +1,29 @@
 from django.db import models
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 # Create your models here.
 class Account(models.Model):
     CHECKING = "checking"
     SAVINGS = "savings"
-    HYSA = "hysa"
-    INVESTMENT = "investment"
     CREDIT_CARD = "credit_card"
+    INVESTMENT = "investment"
     LOAN = "loan"
 
     CATEGORY_CHOICES = [
         (CHECKING, "Checking"),
         (SAVINGS, "Savings"),
-        (HYSA, "High-Yield Savings"),
-        (INVESTMENT, "Investment"),
         (CREDIT_CARD, "Credit Card"),
+        (INVESTMENT, "Investment"),
         (LOAN, "Loan"),
     ]
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="accounts",
+    )
 
     name = models.CharField(max_length=100)
     category = models.CharField(
