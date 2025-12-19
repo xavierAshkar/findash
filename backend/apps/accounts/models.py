@@ -37,7 +37,16 @@ class Account(models.Model):
         max_length=128,
         null=True,
         blank=True,
-        help_text="Provider-specific account ID (e.g. Plaid)"
+        help_text="Provider-specific account ID (e.g. Plaid)",
+    )
+
+    # Plaid linkage if applicable
+    plaid_item = models.ForeignKey(
+        "plaid_link.PlaidItem",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="linked_accounts",
     )
 
     # --- Classification ---
@@ -50,7 +59,7 @@ class Account(models.Model):
         default="USD",
     )
 
-    # --- Balances (core truth) ---
+    # --- Balances (source-of-truth) ---
     balance_current = models.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -73,10 +82,18 @@ class Account(models.Model):
     data_source = models.CharField(
         max_length=20,
         default="manual",
-        help_text="manual | plaid | other"
+        help_text="manual | plaid | other",
     )
 
-    # --- Derived classification flags ---
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "external_account_id"],
+                name="unique_external_account_per_user",
+            )
+        ]
+
+    # --- Derived flags ---
     @property
     def is_debt(self):
         return self.account_type in {self.CREDIT_CARD, self.LOAN}

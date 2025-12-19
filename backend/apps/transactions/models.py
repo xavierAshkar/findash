@@ -4,61 +4,24 @@ from decimal import Decimal
 from apps.accounts.models import Account
 
 class Transaction(models.Model):
-    # --- Categories (goal + cash flow friendly) ---
-    CATEGORY_RENT = "rent"
-    CATEGORY_GROCERIES = "groceries"
-    CATEGORY_RESTAURANTS = "restaurants"
-    CATEGORY_UTILITIES = "utilities"
-    CATEGORY_TRANSPORT = "transport"
-    CATEGORY_ENTERTAINMENT = "entertainment"
-    CATEGORY_SHOPPING = "shopping"
-    CATEGORY_HEALTH = "health"
-    CATEGORY_OTHER = "other"
-
-    CATEGORY_CHOICES = [
-        (CATEGORY_RENT, "Rent"),
-        (CATEGORY_GROCERIES, "Groceries"),
-        (CATEGORY_RESTAURANTS, "Restaurants"),
-        (CATEGORY_UTILITIES, "Utilities"),
-        (CATEGORY_TRANSPORT, "Transport"),
-        (CATEGORY_ENTERTAINMENT, "Entertainment"),
-        (CATEGORY_SHOPPING, "Shopping"),
-        (CATEGORY_HEALTH, "Health"),
-        (CATEGORY_OTHER, "Other"),
-    ]
-
     account = models.ForeignKey(
         Account,
         on_delete=models.CASCADE,
         related_name="transactions",
     )
 
-    # Signed amount relative to the account:
-    # Assets (checking/savings):
-    #   + increases balance (income / transfer in)
-    #   - decreases balance (expense / transfer out)
-    #
-    # Liabilities (credit/loan):
-    #   + increases balance owed (purchase / new debt)
-    #   - decreases balance owed (payment / refund / cashback)
+    # --- Plaid identity (idempotency) ---
+    external_transaction_id = models.CharField(
+        max_length=128,
+        unique=True,
+        help_text="Provider-specific transaction ID (e.g. Plaid)",
+    )
+
+    # Signed amount relative to the account
     amount = models.DecimalField(
         max_digits=10,
         decimal_places=2,
         help_text="Signed amount relative to the account",
-    )
-
-    category = models.CharField(
-        max_length=50,
-        choices=CATEGORY_CHOICES,
-        default=CATEGORY_OTHER,
-    )
-
-    # Optional link for transfers
-    related_transaction = models.OneToOneField(
-        "self",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
     )
 
     currency_code = models.CharField(
@@ -66,12 +29,41 @@ class Transaction(models.Model):
         default="USD",
     )
 
-    date = models.DateField()
+    date = models.DateField(db_index=True)
     description = models.CharField(max_length=255)
+
+    # --- Plaid raw metadata ---
+    pending = models.BooleanField(default=False)
+    plaid_category_primary = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+    )
+    plaid_category_detailed = models.CharField(
+        max_length=200,
+        null=True,
+        blank=True,
+    )
+
+    # --- User / system enrichment (post-ingestion) ---
+    category = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        help_text="Canonical category set by classification logic",
+    )
+
+    related_transaction = models.OneToOneField(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        help_text="Linked transfer (set later, never during ingestion)",
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
 
-    # --- Derived helpers ---
+    # --- Derived helpers (safe) ---
     @property
     def is_income(self):
         return (self.amount > Decimal("0")) and (not self.account.is_debt)

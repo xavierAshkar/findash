@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Plaid Test</title>
+  <script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
+</head>
+<body>
+  <button id="link-button">Link Account</button>
+
+  <script>
+    async function getLinkToken() {
+      const res = await fetch("/plaid/link-token/");
+      const data = await res.json();
+      return data.link_token;
+    }
+
+    document.getElementById("link-button").onclick = async () => {
+      const token = await getLinkToken();
+
+      const handler = Plaid.create({
+        token,
+        onSuccess: async (public_token) => {
+          await fetch("/plaid/exchange/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ public_token })
+          });
+
+          await fetch("/plaid/sync-accounts/", {
+            method: "POST"
+          });
+
+          alert("Plaid linked and accounts synced");
+        }
+      });
+
+      handler.open();
+    };
+  </script>
+</body>
+</html>
