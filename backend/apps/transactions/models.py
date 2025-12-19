@@ -14,6 +14,8 @@ class Transaction(models.Model):
     external_transaction_id = models.CharField(
         max_length=128,
         unique=True,
+        null=True,
+        blank=True,
         help_text="Provider-specific transaction ID (e.g. Plaid)",
     )
 
