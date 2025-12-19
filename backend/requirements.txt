@@ -1,5 +1,12 @@
 asgiref==3.11.0
+cffi==2.0.0
+cryptography==46.0.3
 Django==5.1.15
+nulltype==2.3.1
+plaid-python==37.1.0
+pycparser==2.23
 python-dateutil==2.9.0.post0
+python-decouple==3.8
 six==1.17.0
 sqlparse==0.5.4
+urllib3==2.6.2
