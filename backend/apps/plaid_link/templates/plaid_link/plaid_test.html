@@ -26,11 +26,8 @@
             body: JSON.stringify({ public_token })
           });
 
-          await fetch("/plaid/sync-accounts/", {
-            method: "POST"
-          });
+          alert("Plaid linked and synced");
 
-          alert("Plaid linked and accounts synced");
         }
       });
 

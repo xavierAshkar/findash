@@ -4,6 +4,10 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 
+from apps.plaid_link.services.accounts import sync_accounts
+from apps.plaid_link.services.transactions import sync_transactions
+
+
 from plaid.model.item_public_token_exchange_request import (
     ItemPublicTokenExchangeRequest
 )
@@ -36,5 +40,8 @@ def exchange_public_token(request):
     item.set_access_token(response["access_token"])
     item.item_id = response["item_id"]
     item.save()
+
+    sync_accounts(item)
+    sync_transactions(item)
 
     return JsonResponse({"status": "ok"})
