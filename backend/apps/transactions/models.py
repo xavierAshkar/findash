@@ -19,11 +19,12 @@ class Transaction(models.Model):
         help_text="Provider-specific transaction ID (e.g. Plaid)",
     )
 
-    # Signed amount relative to the account
+    # Signed amount using app convention:
+    # inflow = positive, outflow = negative (normalized at ingestion)
     amount = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        help_text="Signed amount relative to the account",
+        help_text="Signed amount: inflow positive, outflow negative (normalized at ingestion)",
     )
 
     currency_code = models.CharField(
@@ -67,20 +68,23 @@ class Transaction(models.Model):
 
     # --- Derived helpers (safe) ---
     @property
-    def is_income(self):
-        return (self.amount > Decimal("0")) and (not self.account.is_debt)
-
-    @property
-    def is_expense(self):
-        return (self.amount < Decimal("0")) and (not self.account.is_debt)
-
-    @property
     def is_debt_increase(self):
-        return (self.amount > Decimal("0")) and self.account.is_debt
+        # debt increased (card charge)
+        return (self.amount < Decimal("0")) and self.account.is_debt
 
     @property
     def is_debt_payment(self):
-        return (self.amount < Decimal("0")) and self.account.is_debt
+        # debt decreased (payment/refund)
+        return (self.amount > Decimal("0")) and self.account.is_debt
+    
+    @property
+    def is_inflow(self):
+        return self.amount > Decimal("0")
+
+    @property
+    def is_outflow(self):
+        return self.amount < Decimal("0")
+
 
     @property
     def is_transfer(self):

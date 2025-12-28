@@ -1,8 +1,8 @@
 from plaid.model.transactions_sync_request import TransactionsSyncRequest
-
 from apps.plaid_link.utils import get_plaid_client
 from apps.transactions.models import Transaction
 from apps.accounts.models import Account
+from apps.transactions.services.normalization import normalize_plaid_amount
 
 
 def sync_transactions(plaid_item):
@@ -32,12 +32,14 @@ def sync_transactions(plaid_item):
             if not account:
                 continue
 
+            normalized_amount = normalize_plaid_amount(tx["amount"])
+
             Transaction.objects.update_or_create(
                 external_transaction_id=tx["transaction_id"],
                 defaults={
                     "account": account,
                     "description": tx.get("name") or tx.get("merchant_name") or "Transaction",
-                    "amount": tx["amount"],
+                    "amount": normalized_amount,  # CHANGED
                     "date": tx["date"],
                     "pending": tx["pending"],
                     "currency_code": tx.get("iso_currency_code") or "USD",
