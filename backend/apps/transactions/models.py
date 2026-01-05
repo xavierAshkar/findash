@@ -13,7 +13,6 @@ class Transaction(models.Model):
     # --- Plaid identity (idempotency) ---
     external_transaction_id = models.CharField(
         max_length=128,
-        unique=True,
         null=True,
         blank=True,
         help_text="Provider-specific transaction ID (e.g. Plaid)",
@@ -89,6 +88,14 @@ class Transaction(models.Model):
     @property
     def is_transfer(self):
         return self.related_transaction_id is not None
+    
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["account", "external_transaction_id"],
+                name="unique_external_tx_per_account",
+            )
+        ]
 
     def __str__(self):
         return f"{self.date} | {self.description} | {self.amount}"

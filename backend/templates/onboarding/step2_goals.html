@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Onboarding - Step 2</title>
+  </head>
+  <body>
+    <h1>What are your top financial goals?</h1>
+
+    <form id="form">
+      <label><input type="checkbox" name="goal" value="PAY_OFF_DEBT" /> Pay off debt</label><br />
+      <label><input type="checkbox" name="goal" value="GROW_SAVINGS" /> Grow savings</label><br />
+      <label><input type="checkbox" name="goal" value="START_INVESTING" /> Begin investing</label><br />
+      <label><input type="checkbox" name="goal" value="REDUCE_SPENDING" /> Reduce spending</label><br />
+      <label><input type="checkbox" name="goal" value="STAY_ORGANIZED" /> Stay on top of finances</label><br /><br />
+
+      <button type="button" id="backBtn">Back</button>
+      <button type="submit">Continue</button>
+    </form>
+
+    <script>
+      document.getElementById("backBtn").addEventListener("click", () => {
+        window.location.href = "/app/onboarding/1/";
+      });
+
+      document.getElementById("form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const goals = Array.from(document.querySelectorAll('input[name="goal"]:checked'))
+          .map((el) => el.value);
+
+        const res = await fetch("/api/users/onboarding/save", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ financial_goals: goals }),
+        });
+
+        if (!res.ok) {
+          alert("Failed to save. Try again.");
+          return;
+        }
+
+        // Step 3 comes next (we’ll build it next)
+        window.location.href = "/app/onboarding/3/";
+      });
+    </script>
+  </body>
+</html>

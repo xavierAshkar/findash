@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 
 User = get_user_model()
 
@@ -89,7 +90,8 @@ class Account(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=["user", "external_account_id"],
-                name="unique_external_account_per_user",
+                condition=Q(external_account_id__isnull=False),
+                name="unique_external_account_per_user_nonnull",
             )
         ]
 
