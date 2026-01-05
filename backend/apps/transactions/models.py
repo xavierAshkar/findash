@@ -77,11 +77,11 @@ class Transaction(models.Model):
         return (self.amount > Decimal("0")) and self.account.is_debt
     
     @property
-    def is_inflow(self):
+    def is_income(self):
         return self.amount > Decimal("0")
 
     @property
-    def is_outflow(self):
+    def is_expense(self):
         return self.amount < Decimal("0")
 
 
