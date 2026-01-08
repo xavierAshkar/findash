@@ -66,11 +66,12 @@ class CashflowTestCase(TestCase):
         )
 
         Transaction.objects.create(
-            account=cls.credit,
-            amount=Decimal("50"),  # cashback → debt reduction
+            account=cls.checking,
+            amount=Decimal("-200"),
             category="other",
-            date=date(2025, 12, 10),
-            description="Cashback",
+            plaid_category_primary="Payment",
+            date=date(2025, 12, 6),
+            description="Credit Card Payment",
         )
 
         # November data

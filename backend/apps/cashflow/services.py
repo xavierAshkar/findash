@@ -34,34 +34,23 @@ def get_monthly_cashflow(user, month=None):
     by_category = {}
 
     for tx in transactions:
-        # Ignore transfers
-        if tx.is_transfer:
+        # Ignore internal moves (MVP): transfers + payments
+        if tx.is_transfer or tx.plaid_category_primary in {"Transfer", "Payment"}:
             continue
 
         # Ignore investments entirely
         if tx.account.account_type == Account.INVESTMENT:
             continue
 
-        if tx.is_income:
+        if tx.is_income and not tx.account.is_debt:
             income += tx.amount
 
         elif tx.is_expense:
             amount = abs(tx.amount)
             expenses += amount
-            by_category[tx.category] = (
-                by_category.get(tx.category, Decimal("0.00")) + amount
-            )
-
-        elif tx.is_debt_increase:
-            # Credit card purchase = expense
-            amount = tx.amount  # already positive
-            expenses += amount
-            by_category[tx.category] = (
-                by_category.get(tx.category, Decimal("0.00")) + amount
-            )
-
-        # tx.is_debt_payment → intentionally ignored
-
+            cat = tx.category or "uncategorized"
+            by_category[cat] = by_category.get(cat, Decimal("0.00")) + amount
+            
     return {
         "month": start_date.strftime("%Y-%m"),
         "income": income,
