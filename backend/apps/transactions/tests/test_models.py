@@ -51,7 +51,7 @@ class TransactionModelTest(TestCase):
     def test_credit_purchase(self):
         tx = Transaction.objects.create(
             account=self.credit,
-            amount=Decimal("50"),
+            amount=Decimal("-50"),
             date=date.today(),
             description="Shopping",
         )
@@ -61,7 +61,7 @@ class TransactionModelTest(TestCase):
     def test_credit_payment(self):
         tx = Transaction.objects.create(
             account=self.credit,
-            amount=Decimal("-200"),
+            amount=Decimal("+200"),
             date=date.today(),
             description="Card Payment",
         )

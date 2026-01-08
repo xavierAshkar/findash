@@ -84,7 +84,6 @@ class Transaction(models.Model):
     def is_expense(self):
         return self.amount < Decimal("0")
 
-
     @property
     def is_transfer(self):
         return self.related_transaction_id is not None
