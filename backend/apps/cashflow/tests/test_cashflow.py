@@ -59,7 +59,7 @@ class CashflowTestCase(TestCase):
 
         Transaction.objects.create(
             account=cls.credit,
-            amount=Decimal("150"),  # credit purchase → expense
+            amount=Decimal("-150"),
             category="shopping",
             date=date(2025, 12, 5),
             description="Shopping",
@@ -67,7 +67,7 @@ class CashflowTestCase(TestCase):
 
         Transaction.objects.create(
             account=cls.credit,
-            amount=Decimal("-50"),  # cashback → debt reduction
+            amount=Decimal("50"),  # cashback → debt reduction
             category="other",
             date=date(2025, 12, 10),
             description="Cashback",
