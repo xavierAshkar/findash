@@ -1,24 +1,21 @@
-from apps.accounts.models import Account
-from apps.plaid_link.utils import get_plaid_client
-
-
-# Plaid → internal account type mapping
-PLAID_TYPE_MAP = {
-    "checking": Account.CHECKING,
-    "savings": Account.SAVINGS,
-    "credit card": Account.CREDIT_CARD,
-    "credit": Account.CREDIT_CARD,
-    "loan": Account.LOAN,
-    "brokerage": Account.INVESTMENT,
-    "investment": Account.INVESTMENT,
-}
-
-
 def sync_accounts(plaid_item):
     """
     Fetch accounts from Plaid and upsert them into the Account model.
     """
+    from apps.plaid_link.utils import get_plaid_client
+    from apps.accounts.models import Account
     client = get_plaid_client()
+
+    # Plaid → internal account type mapping
+    PLAID_TYPE_MAP = {
+        "checking": Account.CHECKING,
+        "savings": Account.SAVINGS,
+        "credit card": Account.CREDIT_CARD,
+        "credit": Account.CREDIT_CARD,
+        "loan": Account.LOAN,
+        "brokerage": Account.INVESTMENT,
+        "investment": Account.INVESTMENT,
+    }
 
     # Fetch accounts from Plaid
     response = client.accounts_get({

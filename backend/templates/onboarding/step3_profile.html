@@ -1,0 +1,59 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Onboarding - Step 3</title>
+  </head>
+  <body>
+    <h1>What applies to you?</h1>
+    <p>Select anything that applies. You can leave all of these off.</p>
+
+    <form id="form">
+      <label><input type="checkbox" id="has_student_loans" /> I have student loans</label><br />
+      <label><input type="checkbox" id="has_credit_card_debt" /> I have credit card debt</label><br />
+      <label><input type="checkbox" id="has_car_payments" /> I have car payments</label><br />
+      <label><input type="checkbox" id="pays_rent" /> I pay rent</label><br />
+      <label><input type="checkbox" id="has_mortgage" /> I have a mortgage</label><br /><br />
+
+      <p id="error" style="color: red; display: none;"></p>
+
+      <button type="button" id="backBtn">Back</button>
+      <button type="submit">Continue</button>
+    </form>
+
+    <script>
+      document.getElementById("backBtn").addEventListener("click", () => {
+        window.location.href = "/app/onboarding/2/";
+      });
+
+      document.getElementById("form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const payload = {
+          has_student_loans: document.getElementById("has_student_loans").checked,
+          has_credit_card_debt: document.getElementById("has_credit_card_debt").checked,
+          has_car_payments: document.getElementById("has_car_payments").checked,
+          pays_rent: document.getElementById("pays_rent").checked,
+          has_mortgage: document.getElementById("has_mortgage").checked,
+        };
+
+        const errorEl = document.getElementById("error");
+        errorEl.style.display = "none";
+        errorEl.textContent = "";
+
+        const res = await fetch("/api/users/onboarding/save", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          alert("Failed to save. Try again.");
+          return;
+        }
+
+        window.location.href = "/app/plaid/link/";
+      });
+    </script>
+  </body>
+</html>

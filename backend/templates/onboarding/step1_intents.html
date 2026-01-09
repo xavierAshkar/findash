@@ -6,6 +6,10 @@
   </head>
   <body>
     <h1>What are you here for?</h1>
+    <form method="post" action="/accounts/logout/">
+      {% csrf_token %}
+      <button type="submit">Log out</button>
+    </form>
 
     <form id="form">
       <label><input type="checkbox" name="intent" value="CASHFLOW" /> Track cashflow</label><br />

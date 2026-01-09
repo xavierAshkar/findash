@@ -1,11 +1,11 @@
 from plaid.model.transactions_sync_request import TransactionsSyncRequest
-from apps.plaid_link.utils import get_plaid_client
-from apps.transactions.models import Transaction
-from apps.accounts.models import Account
 from apps.transactions.services.normalization import normalize_plaid_amount
 
 
 def sync_transactions(plaid_item):
+    from apps.plaid_link.utils import get_plaid_client
+    from apps.transactions.models import Transaction
+    from apps.accounts.models import Account
     client = get_plaid_client()
     cursor = plaid_item.sync_cursor or ""
 

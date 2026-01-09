@@ -14,6 +14,8 @@
       <label><input type="checkbox" name="goal" value="REDUCE_SPENDING" /> Reduce spending</label><br />
       <label><input type="checkbox" name="goal" value="STAY_ORGANIZED" /> Stay on top of finances</label><br /><br />
 
+      <p id="error" style="color: red; display: none;"></p>
+
       <button type="button" id="backBtn">Back</button>
       <button type="submit">Continue</button>
     </form>
@@ -26,8 +28,20 @@
       document.getElementById("form").addEventListener("submit", async (e) => {
         e.preventDefault();
 
-        const goals = Array.from(document.querySelectorAll('input[name="goal"]:checked'))
-          .map((el) => el.value);
+        const goals = Array.from(document.querySelectorAll('input[name="goal"]:checked')).map(
+          (el) => el.value
+        );
+
+        const errorEl = document.getElementById("error");
+        errorEl.style.display = "none";
+        errorEl.textContent = "";
+
+        // client-side guard (matches backend requirement)
+        if (goals.length === 0) {
+          errorEl.textContent = "Please select at least one goal to continue.";
+          errorEl.style.display = "block";
+          return;
+        }
 
         const res = await fetch("/api/users/onboarding/save", {
           method: "POST",
@@ -36,11 +50,19 @@
         });
 
         if (!res.ok) {
+          let payload = null;
+          try {
+            payload = await res.json();
+          } catch {}
+          if (res.status === 400 && payload?.error === "financial_goals_required") {
+            errorEl.textContent = "Please select at least one goal to continue.";
+            errorEl.style.display = "block";
+            return;
+          }
           alert("Failed to save. Try again.");
           return;
         }
 
-        // Step 3 comes next (we’ll build it next)
         window.location.href = "/app/onboarding/3/";
       });
     </script>

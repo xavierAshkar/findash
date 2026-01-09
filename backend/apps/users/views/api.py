@@ -23,7 +23,12 @@ def me(request):
                 "has_student_loans": p.has_student_loans,
                 "has_credit_card_debt": p.has_credit_card_debt,
                 "has_car_payments": p.has_car_payments,
-                "housing_status": p.housing_status,
+                "pays_rent": p.pays_rent,
+                "has_mortgage": p.has_mortgage,
+                "step1_completed_at": p.step1_completed_at.isoformat() if p.step1_completed_at else None,
+                "step2_completed_at": p.step2_completed_at.isoformat() if p.step2_completed_at else None,
+                "step3_completed_at": p.step3_completed_at.isoformat() if p.step3_completed_at else None,
+                "plaid_linked_at": p.plaid_linked_at.isoformat() if p.plaid_linked_at else None,
                 "onboarding_completed_at": p.onboarding_completed_at.isoformat() if p.onboarding_completed_at else None,
             },
         }
@@ -36,25 +41,42 @@ def me(request):
 def save_onboarding(request):
     data = json.loads(request.body.decode("utf-8")) if request.body else {}
     p, _ = UserProfile.objects.get_or_create(user=request.user)
+    now = timezone.now()
 
     if "product_intents" in data:
-        p.product_intents = data["product_intents"]
+        intents = data["product_intents"]
+        if not isinstance(intents, list):
+            return JsonResponse({"ok": False, "error": "invalid_product_intents"}, status=400)
+        p.product_intents = intents
+        if not p.step1_completed_at:
+            p.step1_completed_at = now
+
+
     if "financial_goals" in data:
-        p.financial_goals = data["financial_goals"]
+        goals = data["financial_goals"]
+        if not isinstance(goals, list) or len(goals) == 0:
+            return JsonResponse({"ok": False, "error": "financial_goals_required"}, status=400)
+        p.financial_goals = goals
+        if not p.step2_completed_at:
+            p.step2_completed_at = now
 
-    if "obligations" in data:
-        flags = set(data["obligations"])
-        p.has_student_loans = "STUDENT_LOANS" in flags
-        p.has_credit_card_debt = "CREDIT_CARD_DEBT" in flags
-        p.has_car_payments = "CAR_PAYMENTS" in flags
+    STEP3_FIELDS = [
+        "has_student_loans",
+        "has_credit_card_debt",
+        "has_car_payments",
+        "pays_rent",
+        "has_mortgage",
+    ]
 
-        if "OWN" in flags:
-            p.housing_status = "OWN"
-        elif "RENT" in flags:
-            p.housing_status = "RENT"
+    if any(field in data for field in STEP3_FIELDS):
+        for field in STEP3_FIELDS:
+            if field in data:
+                setattr(p, field, bool(data[field]))
 
-    if data.get("complete") is True:
-        p.onboarding_completed_at = timezone.now()
+        if not p.step3_completed_at:
+            p.step3_completed_at = now
+
+
 
     p.save()
     return JsonResponse({"ok": True})

@@ -20,6 +20,7 @@ def _get_month_bounds(month):
     end = date(year, month_num, monthrange(year, month_num)[1])
     return start, end
 
+# Cashflow counts spending at purchase time; internal transfers and payments are excluded.
 def get_monthly_cashflow(user, month=None):
     start_date, end_date = _get_month_bounds(month)
 
@@ -50,7 +51,7 @@ def get_monthly_cashflow(user, month=None):
             expenses += amount
             cat = tx.category or "uncategorized"
             by_category[cat] = by_category.get(cat, Decimal("0.00")) + amount
-            
+
     return {
         "month": start_date.strftime("%Y-%m"),
         "income": income,

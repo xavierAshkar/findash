@@ -13,6 +13,10 @@ from plaid.model.item_public_token_exchange_request import (
 )
 
 from apps.plaid_link.models import PlaidItem
+from apps.accounts.models import Account
+from django.utils import timezone
+from apps.users.models import UserProfile
+
 from apps.plaid_link.utils import get_plaid_client
 
 
@@ -42,6 +46,21 @@ def exchange_public_token(request):
     item.save()
 
     sync_accounts(item)
+
+    if not Account.objects.filter(user=request.user, plaid_item=item).exists():
+        return JsonResponse(
+            {"error": "No accounts found. Please try linking again."},
+            status=400,
+        )
+
     sync_transactions(item)
+
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    now = timezone.now()
+    if not profile.plaid_linked_at:
+        profile.plaid_linked_at = now
+    if not profile.onboarding_completed_at:
+        profile.onboarding_completed_at = now
+    profile.save()
 
     return JsonResponse({"status": "ok"})

@@ -17,15 +17,20 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from apps.users.views.auth import signup
+from apps.users.views.onboarding import root
+from django.contrib.auth.views import LogoutView
 
 urlpatterns = [
+    path("", root, name="root"),
     path("admin/", admin.site.urls),
-    path("accounts/", include("django.contrib.auth.urls")),
-    path("plaid/", include("apps.plaid_link.urls")),
 
+    # put explicit routes BEFORE the include
+    path("accounts/signup/", signup, name="signup"),
+    path("accounts/logout/", LogoutView.as_view(next_page="/"), name="logout"),
+
+    path("accounts/", include("django.contrib.auth.urls")),
+
+    path("plaid/", include("apps.plaid_link.urls")),
     path("api/users/", include("apps.users.urls")),
     path("app/", include("apps.users.urls")),
-
-    path("accounts/signup/", signup, name="signup"),
-
 ]

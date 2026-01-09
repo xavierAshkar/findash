@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Onboarding - Step 4</title>
+    <script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
+  </head>
+  <body>
+    <h1>Link your bank</h1>
+    <p>Plaid is required to continue.</p>
+
+    <p id="error" style="color: red; display: none;"></p>
+
+    <button id="link-button" type="button">Link Account</button>
+    <button id="backBtn" type="button">Back</button>
+
+    <script>
+      const errorEl = document.getElementById("error");
+      const showError = (msg) => {
+        errorEl.textContent = msg;
+        errorEl.style.display = "block";
+      };
+
+      document.getElementById("backBtn").addEventListener("click", () => {
+        window.location.href = "/app/onboarding/3/";
+      });
+
+      async function getLinkToken() {
+        // keep your existing backend route
+        const res = await fetch("/plaid/link-token/");
+        if (!res.ok) throw new Error("Failed to create link token");
+        const data = await res.json();
+        if (!data.link_token) throw new Error("Missing link_token");
+        return data.link_token;
+      }
+
+      document.getElementById("link-button").onclick = async () => {
+        errorEl.style.display = "none";
+        errorEl.textContent = "";
+
+        let token;
+        try {
+          token = await getLinkToken();
+        } catch (e) {
+          showError("Could not start Plaid Link. Please try again.");
+          return;
+        }
+
+        const handler = Plaid.create({
+          token,
+
+          onSuccess: async (public_token, metadata) => {
+            try {
+              const res = await fetch("/plaid/exchange/", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ public_token }),
+              });
+
+              if (!res.ok) throw new Error("Exchange failed");
+
+              // IMPORTANT: your /plaid/exchange/ backend must:
+              // - create PlaidItem + accounts
+              // - run initial sync
+              // - set profile.plaid_linked_at + profile.onboarding_completed_at
+              //
+              // Then /app/ will route to dashboard.
+              window.location.href = "/app/";
+            } catch (e) {
+              showError("Link succeeded, but syncing failed. Please try linking again.");
+              window.location.href = "/app/plaid/link/";
+            }
+          },
+
+          onExit: (err, metadata) => {
+            // cancel / close / error -> retry loop
+            window.location.href = "/app/plaid/link/";
+          },
+        });
+
+        handler.open();
+      };
+    </script>
+  </body>
+</html>
