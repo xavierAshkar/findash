@@ -49,9 +49,3 @@ def plaid_link(request):
         return redirect("/app/onboarding/3/")
     return render(request, "onboarding/plaid_link.html")
 
-@login_required
-def dashboard(request):
-    p, _ = UserProfile.objects.get_or_create(user=request.user)
-    if not p.onboarding_completed_at:
-        return redirect("/app/")
-    return render(request, "onboarding/dashboard_placeholder.html")

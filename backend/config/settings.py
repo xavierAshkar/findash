@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "apps.cashflow",
     "apps.plaid_link",
     "apps.users.apps.UsersConfig",
+    "apps.ui",
 ]
 
 MIDDLEWARE = [

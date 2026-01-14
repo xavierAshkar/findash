@@ -32,5 +32,7 @@ urlpatterns = [
 
     path("plaid/", include("apps.plaid_link.urls")),
     path("api/users/", include("apps.users.urls")),
-    path("app/", include("apps.users.urls")),
+
+    path("app/", include("apps.users.urls")),  # onboarding + entry
+    path("app/", include("apps.ui.urls")),     # real app pages
 ]

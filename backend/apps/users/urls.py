@@ -2,7 +2,7 @@ from django.urls import path
 
 from apps.users.views.api import me, save_onboarding
 from apps.users.views.onboarding import (
-    entry, step1_intents, step2_goals, step3_profile, dashboard, plaid_link
+    entry, step1_intents, step2_goals, step3_profile, plaid_link
 )
 urlpatterns = [
     # App entry
@@ -19,6 +19,4 @@ urlpatterns = [
 
     # Plaid
     path("plaid/link/", plaid_link, name="plaid_link"),
-
-    path("dashboard/", dashboard, name="dashboard"),
 ]
