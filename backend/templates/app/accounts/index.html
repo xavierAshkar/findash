@@ -7,5 +7,37 @@
 {% endblock %}
 
 {% block content %}
-  <div class="text-zinc-300">Placeholder</div>
+  {% if accounts %}
+    <div class="space-y-2">
+      {% for a in accounts %}
+        <div class="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-950 p-4">
+          <div class="min-w-0">
+            <div class="font-medium text-white truncate">
+              {{ a.name }}
+              {% if a.mask %}
+                <span class="text-zinc-400">•••• {{ a.mask }}</span>
+              {% endif %}
+            </div>
+
+            <div class="text-sm text-zinc-400">
+              {{ a.get_account_type_display }}
+              {% if a.institution_name %} • {{ a.institution_name }}{% endif %}
+            </div>
+          </div>
+
+          <div class="text-right">
+            <div class="font-semibold text-white">
+              {{ a.balance_current }}
+            </div>
+            <div class="text-sm text-zinc-400">Current</div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="rounded-lg border border-zinc-800 bg-zinc-950 p-6 text-zinc-300">
+      No accounts yet. Link an institution to see balances here.
+    </div>
+  {% endif %}
 {% endblock %}
+
