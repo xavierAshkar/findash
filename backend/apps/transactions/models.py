@@ -1,3 +1,4 @@
+# backend/apps/transactions/models.py
 from django.db import models
 from decimal import Decimal
 
