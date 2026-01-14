@@ -7,5 +7,86 @@
 {% endblock %}
 
 {% block content %}
-  <div class="text-zinc-300">Placeholder</div>
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+    <!-- Accounts -->
+    <section class="rounded-lg border border-zinc-800 bg-zinc-950">
+      <div class="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
+        <h2 class="font-semibold">Accounts</h2>
+        <a class="text-sm text-zinc-300 hover:text-white" href="/app/accounts/">View all</a>
+      </div>
+
+      <div class="p-4">
+        {% if accounts %}
+          <div class="space-y-2">
+            {% for a in accounts %}
+              <div class="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-950 p-3">
+                <div class="min-w-0">
+                  <div class="font-medium text-white truncate">
+                    {{ a.name }}
+                    {% if a.mask %}<span class="text-zinc-400">•••• {{ a.mask }}</span>{% endif %}
+                  </div>
+                  <div class="text-sm text-zinc-400">
+                    {{ a.get_account_type_display }}
+                    {% if a.institution_name %} • {{ a.institution_name }}{% endif %}
+                  </div>
+                </div>
+
+                <div class="text-right">
+                  <div class="font-semibold text-white">{{ a.balance_current }}</div>
+                  <div class="text-sm text-zinc-400">Current</div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-zinc-300">
+            No accounts yet. <a class="underline hover:text-white" href="/app/plaid/link/">Link an institution</a>.
+          </div>
+        {% endif %}
+      </div>
+    </section>
+
+    <!-- Recent Transactions -->
+    <section class="rounded-lg border border-zinc-800 bg-zinc-950">
+      <div class="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
+        <h2 class="font-semibold">Recent Transactions</h2>
+        <a class="text-sm text-zinc-300 hover:text-white" href="/app/transactions/">View all</a>
+      </div>
+
+      <div class="p-4">
+        {% if recent_transactions %}
+          <div class="space-y-2">
+            {% for t in recent_transactions %}
+              <div class="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-950 p-3">
+                <div class="min-w-0">
+                  <div class="font-medium text-white truncate">
+                    {{ t.description }}
+                    {% if t.pending %}<span class="text-xs text-zinc-400">(Pending)</span>{% endif %}
+                  </div>
+                  <div class="text-sm text-zinc-400">
+                    {{ t.date }} • {{ t.account.name }}
+                    {% if t.account.mask %} • •••• {{ t.account.mask }}{% endif %}
+                  </div>
+                </div>
+
+                <div class="text-right shrink-0 pl-4">
+                  <div class="font-semibold text-white">{{ t.amount }}</div>
+                  <div class="text-sm text-zinc-400">
+                    {% if t.amount > 0 %}Inflow{% else %}Outflow{% endif %}
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-zinc-300">
+            No transactions yet.
+          </div>
+        {% endif %}
+      </div>
+    </section>
+
+  </div>
 {% endblock %}
+
