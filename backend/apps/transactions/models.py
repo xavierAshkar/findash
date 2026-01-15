@@ -5,6 +5,15 @@ from decimal import Decimal
 from apps.accounts.models import Account
 
 class Transaction(models.Model):
+    @property
+    def display_amount(self) -> Decimal:
+        """
+        UI-only: For credit-card payments categorized as TRANSFER,
+        show a positive number even if stored as negative.
+        """
+        if self.category == "TRANSFER" and self.account.is_debt and self.amount < 0:
+            return -self.amount
+        return self.amount
     account = models.ForeignKey(
         Account,
         on_delete=models.CASCADE,

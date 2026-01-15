@@ -37,11 +37,19 @@
 
           <div class="text-right shrink-0 pl-4">
             <div class="font-semibold text-white">
-              {{ t.amount }}
+              {{ t.display_amount }}
             </div>
             <div class="text-sm text-zinc-400">
-              {% if t.amount > 0 %}Inflow{% else %}Outflow{% endif %}
-            </div>
+              {% if t.category == "TRANSFER" %}
+                Transfer
+              {% elif t.category == "DEBT_PAYMENT" %}
+                Debt payment
+              {% elif t.amount > 0 %}
+                Inflow
+              {% else %}
+                Outflow
+              {% endif %}
+            </div>            
           </div>
         </div>
       {% endfor %}
