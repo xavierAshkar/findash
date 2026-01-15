@@ -78,16 +78,24 @@ class Transaction(models.Model):
         return (self.amount > Decimal("0")) and self.account.is_debt
     
     @property
-    def is_income(self):
+    def is_transfer(self):
+        return self.category == "TRANSFER"
+    
+    @property
+    def is_true_income(self):
+        return self.category == "INCOME"
+    
+    @property
+    def counts_as_spend(self):
+        return (self.amount < Decimal("0")) and (self.category not in {None, "TRANSFER", "DEBT_PAYMENT"})
+
+    @property
+    def is_inflow(self):
         return self.amount > Decimal("0")
 
     @property
-    def is_expense(self):
+    def is_outflow(self):
         return self.amount < Decimal("0")
-
-    @property
-    def is_transfer(self):
-        return self.related_transaction_id is not None
     
     class Meta:
         constraints = [

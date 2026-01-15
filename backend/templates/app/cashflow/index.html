@@ -16,12 +16,22 @@
       </div>
     </section>
 
-    <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <section class="grid grid-cols-1 md:grid-cols-4 gap-4">
       <div class="rounded-lg border border-zinc-800 bg-zinc-950 p-4">
         <div class="text-sm text-zinc-400">Income</div>
         <div class="text-2xl font-semibold">{{ cashflow.current.income }}</div>
-        <div class="text-sm text-zinc-400">Δ {{ cashflow.delta.income }}</div>
+        <div class="text-sm text-zinc-400">
+          Δ {% if cashflow.delta.income >= 0 %}+{% endif %}{{ cashflow.delta.income }}
+        </div>        
       </div>
+
+      <div class="rounded-lg border border-zinc-800 bg-zinc-950 p-4">
+        <div class="text-sm text-zinc-400">Inflow</div>
+        <div class="text-2xl font-semibold">{{ cashflow.current.inflow }}</div>
+        <div class="text-sm text-zinc-400">
+          Δ {% if cashflow.delta.inflow >= 0 %}+{% endif %}{{ cashflow.delta.inflow }}
+        </div>
+      </div>      
 
       <div class="rounded-lg border border-zinc-800 bg-zinc-950 p-4">
         <div class="text-sm text-zinc-400">Expenses</div>
@@ -32,7 +42,9 @@
       <div class="rounded-lg border border-zinc-800 bg-zinc-950 p-4">
         <div class="text-sm text-zinc-400">Net</div>
         <div class="text-2xl font-semibold">{{ cashflow.current.net }}</div>
-        <div class="text-sm text-zinc-400">Δ {{ cashflow.delta.net }}</div>
+        <div class="text-sm text-zinc-400">
+          Δ {% if cashflow.delta.net >= 0 %}+{% endif %}{{ cashflow.delta.net }}
+        </div>        
       </div>
     </section>
 

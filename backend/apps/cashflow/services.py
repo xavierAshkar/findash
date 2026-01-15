@@ -31,33 +31,54 @@ def get_monthly_cashflow(user, month=None):
         date__lte=end_date,
     )
 
-    income = Decimal("0.00")
-    expenses = Decimal("0.00")
+    income = Decimal("0.00")   # true income only (category == INCOME)
+    inflow = Decimal("0.00")   # all positive money-in excluding transfers/debt
+    expenses = Decimal("0.00") # spend excluding transfers/debt
     by_category = {}
 
     for tx in transactions:
-        # Ignore internal moves (MVP): transfers + payments
-        if tx.is_transfer or tx.plaid_category_primary in {"Transfer", "Payment"}:
+        # Exclude pending for stable totals
+        if tx.pending:
             continue
 
         # Ignore investments entirely
         if tx.account.account_type == Account.INVESTMENT:
             continue
 
-        if tx.is_income and not tx.account.is_debt:
-            income += tx.amount
+        # Exclude internal movement + debt payments
+        if tx.category in {"TRANSFER", "DEBT_PAYMENT"}:
+            continue
 
-        elif tx.is_expense:
+        # True income only
+        if tx.is_true_income:
+            income += tx.amount
+            inflow += tx.amount
+            continue
+
+        # Refunds/reimbursements/etc. (positive but not INCOME)
+        if tx.is_inflow:
+            inflow += tx.amount
+            continue
+
+        # Spending (already excludes transfer/debt via helper, but kept explicit above)
+        if tx.counts_as_spend:
             amount = abs(tx.amount)
             expenses += amount
-            cat = tx.category or "uncategorized"
+            cat = tx.category or "OTHER"
             by_category[cat] = by_category.get(cat, Decimal("0.00")) + amount
+
+    income = income.quantize(Decimal("0.01"))
+    inflow = inflow.quantize(Decimal("0.01"))
+    expenses = expenses.quantize(Decimal("0.01"))
+    net = (income - expenses).quantize(Decimal("0.01"))
+    by_category = {k: v.quantize(Decimal("0.01")) for k, v in by_category.items()}
 
     return {
         "month": start_date.strftime("%Y-%m"),
         "income": income,
+        "inflow": inflow,
         "expenses": expenses,
-        "net": income - expenses,
+        "net": net,
         "by_category": by_category,
     }
 
@@ -84,9 +105,11 @@ def get_monthly_cashflow_comparison(user, month=None):
 
     delta = {
         "income": current["income"] - previous["income"],
+        "inflow": current["inflow"] - previous["inflow"],
         "expenses": current["expenses"] - previous["expenses"],
         "net": current["net"] - previous["net"],
     }
+
 
     # Category deltas (union of both months)
     delta_by_category = {}
